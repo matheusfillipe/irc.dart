@@ -54,7 +54,7 @@ void main() {
     }
   });
 
-  client.register(handleAsCommand);
+  client.register(MessageEvent, handleAsCommand);
 
   command('notice-me', (CommandEvent event) {
     event.notice('This is a test notice to you');

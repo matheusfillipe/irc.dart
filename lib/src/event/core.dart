@@ -35,7 +35,7 @@ class EventDispatcher {
   final int defaultPriority;
   final int? dispatcherId;
   final _handlers = <Type, List<_EventHandler>>{};
-  
+
   /// Creates a new Event Dispatcher.
   ///
   /// If [defaultPriority] is specified, it will be the priority
@@ -46,11 +46,11 @@ class EventDispatcher {
   /// has a filter, it should be provided in order to properly unregister the
   /// listener. If the specific [handler] has a priority, it should be provided as well.
   /// Returns whether the [handler] was removed or not.
-  bool unregister<T>(EventHandlerFunction<T> handler,
+  bool unregister<T>(Type type, EventHandlerFunction<T> handler,
       {EventFilter filter = _defaultFilter, int? priority}) {
     priority ??= defaultPriority;
 
-    var name = _getName(handler);
+    var name = type; //_getName(handler);
 
     if (!_handlers.containsKey(name)) {
       return false;
@@ -91,13 +91,13 @@ class EventDispatcher {
   /// If [always] is true, the event handler will be called even if the event was canceled.
   ///
   /// Returns false if [method] is already registered, otherwise true.
-  bool register<T>(EventHandlerFunction<T> handler,
+  bool register<T>(Type type, EventHandlerFunction<T> handler,
       {EventFilter filter = _defaultFilter,
       int? priority,
       bool always = false}) {
     priority ??= defaultPriority;
 
-    var name = _getName(handler);
+    var name = type; //_getName(handler);
     if (!_handlers.containsKey(name)) {
       _handlers[name] = <_EventHandler>[];
     }
@@ -115,6 +115,7 @@ class EventDispatcher {
   }
 
   /// Scans the object for [Subscribe] annotations and registers handlers appropriately.
+  /*
   bool registerHandlers(Object object) {
     var mirror = reflect(object);
     var registered = false;
@@ -173,9 +174,10 @@ class EventDispatcher {
     }
 
     return registered;
-  }
+  }*/
 
   /// Unregisters all handlers that were registered on [object].
+  /*
   bool unregisterHandlers(Object object) {
     var m = _handlers.values.where((h) {
       return h.any((it) => it.object == object);
@@ -192,7 +194,7 @@ class EventDispatcher {
     }
 
     return true;
-  }
+  }*/
 
   /// Fires an event to registered listeners. Any listeners that take the
   /// specific type [event] will be called.
@@ -200,7 +202,7 @@ class EventDispatcher {
   /// If [postDeadEvent] is true, if no handlers are called for the event,
   /// it will post a new event of type [DeadEvent].
   bool post<T>(T event, {bool postDeadEvent = true}) {
-    var name = _getName(event);
+    var name = event.runtimeType; //_getName(event);
 
     if (!_handlers.containsKey(name)) {
       if (postDeadEvent) {
@@ -227,6 +229,7 @@ class EventDispatcher {
   }
 
   /// Gets the type of the first parameter, used for posting.
+  /*
   Type _getName(dynamic input) {
     if (input is Function) {
       return (reflect(input) as ClosureMirror)
@@ -240,7 +243,7 @@ class EventDispatcher {
     } else {
       return input.runtimeType;
     }
-  }
+  }*/
 
   static bool _defaultFilter(dynamic obj) {
     return false;
