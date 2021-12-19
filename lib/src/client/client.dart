@@ -521,22 +521,20 @@ class Client extends ClientBase {
       {Duration timeout = const Duration(seconds: 5)}) {
     var completer = Completer.sync();
 
-    var handler = (WhoisEvent event) {
-      if (event.nickname == nickname) {
-        if (!completer.isCompleted) {
-          completer.complete(event.away);
-        }
+    var handler = (IsOnEvent event) {
+      if (!completer.isCompleted) {
+        completer.complete(event.users.contains(name));
       }
     };
 
-    register(WhoisEvent, handler);
+    register(IsOnEvent, handler);
     send('ISON ${name}');
 
     return completer.future
         .timeout(timeout, onTimeout: () => false)
         .then((value) {
       Future(() {
-        unregister(WhoisEvent, handler);
+        unregister(IsOnEvent, handler);
       });
       return value;
     });
