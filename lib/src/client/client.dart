@@ -66,7 +66,7 @@ class Client extends ClientBase {
 
   /// Creates a new IRC Client using the specified configuration
   /// If parser is specified, then the parser is used for the current client
-  Client(Configuration config,
+  Client(this.config,
       {IrcParser? parser,
       IrcConnection? connection,
       this.sendInterval = const Duration(milliseconds: 2)})
@@ -76,7 +76,6 @@ class Client extends ClientBase {
                 ? WebSocketIrcConnection()
                 : SocketIrcConnection()),
         metadata = {} {
-    this.config = config;
     _registerHandlers();
     _nickname = config.nickname;
     _whoisBuilders = <String, WhoisBuilder>{};
@@ -737,7 +736,7 @@ class Client extends ClientBase {
         if (who == _nickname) {
           // We joined a new channel
           var channel = getChannel(chanName);
-          channel ??= channels[chanName] = new Channel(this, chanName);
+          channel ??= channels[chanName] = Channel(this, chanName);
           post(ClientJoinEvent(this, channel));
           channel.reloadBans();
         } else {
@@ -1155,7 +1154,7 @@ class Client extends ClientBase {
         if (_motd.isEmpty) {
           _motd += p!;
         } else {
-          _motd += '\n' + p!;
+          _motd += '\n$p';
         }
         break;
 
