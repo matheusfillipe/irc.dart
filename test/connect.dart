@@ -17,11 +17,11 @@ void main() {
     }
   });
 
-  env.client.register(
+  env.client.register(LineReceiveEvent,
       (LineReceiveEvent event) => print('Client Received: ${event.line}'));
-  env.client
-      .register((LineSentEvent event) => print('Client Sent: ${event.line}'));
-  env.client.register((ReadyEvent event) => event.join('#test'));
+  env.client.register(LineSentEvent,
+      (LineSentEvent event) => print('Client Sent: ${event.line}'));
+  env.client.register(ReadyEvent, (ReadyEvent event) => event.join('#test'));
 
   env.client.connect();
 }

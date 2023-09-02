@@ -4,7 +4,7 @@ library irc.client;
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
-import 'dart:mirrors';
+//import 'dart:mirrors';
 
 // Import pedantic for unawaited
 import 'package:pedantic/pedantic.dart';

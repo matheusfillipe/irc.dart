@@ -52,14 +52,14 @@ class User extends Entity {
       }
     };
 
-    client.register(handler);
+    client.register(WhoisEvent, handler);
     client.whois(nickname);
 
     return completer.future
         .timeout(const Duration(seconds: 5), onTimeout: () => false)
         .then((value) {
       Future(() {
-        client.unregister(handler);
+        client.unregister(WhoisEvent, handler);
       });
       return value;
     });

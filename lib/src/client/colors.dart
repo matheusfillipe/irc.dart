@@ -34,6 +34,7 @@ class Color {
 
   /// Gets a Color by the name of [input]. If no such color exists it returns null.
   static String? forName(String input) {
+    /*
     var name = input.replaceAll(' ', '_').toUpperCase();
     var field;
     try {
@@ -44,11 +45,13 @@ class Color {
     } catch (e) {
       return null;
     }
-    return field.reflectee;
+    return field.reflectee;*/
+    return NORMAL;
   }
 
   /// Gets a Mapping of Color Names to Color Beginnings
   static Map<String, String?> allColors() {
+    /*
     var all = <String, String?>{};
     var clazz = reflectClass(Color);
     clazz.declarations.forEach((key, value) {
@@ -63,7 +66,8 @@ class Color {
         all[name] = field.reflectee;
       }
     });
-    return all;
+    return all;*/
+    return {};
   }
 
   static String sanitize(String message) {

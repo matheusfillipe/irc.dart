@@ -221,11 +221,11 @@ class Client extends ClientBase {
   /// The higher a priority is, the quicker it will be called in the handler list when an event is posted.
   ///
   /// Returns false if [method] is already registered, otherwise true.
-  bool register<T extends Event>(EventHandlerFunction<T> handler,
+  bool register<T extends Event>(Type type, EventHandlerFunction<T> handler,
       {EventFilter<T>? filter, int? priority}) {
     return filter == null
-        ? dispatcher.register(handler, priority: priority)
-        : dispatcher.register(handler,
+        ? dispatcher.register(type, handler, priority: priority)
+        : dispatcher.register(type, handler,
             filter: filter as bool Function(dynamic), priority: priority);
   }
 
@@ -241,11 +241,12 @@ class Client extends ClientBase {
   /// has a filter, it should be provided in order to properly unregister the
   /// listener. If the specific [handler] has a priority, it should be provided as well.
   /// Returns whether the [handler] was removed or not.
-  bool unregister<T extends Event>(EventHandlerFunction<T> handler,
+  bool unregister<T extends Event>(Type type, EventHandlerFunction<T> handler,
       {EventFilter? filter, int? priority}) {
     return filter == null
-        ? dispatcher.unregister(handler, priority: priority)
-        : dispatcher.unregister(handler, filter: filter, priority: priority);
+        ? dispatcher.unregister(type, handler, priority: priority)
+        : dispatcher.unregister(type, handler,
+            filter: filter, priority: priority);
   }
 
   final List<Event> _batchedEvents = [];
@@ -281,7 +282,7 @@ class Client extends ClientBase {
 
   /// Registers all the default handlers.
   void _registerHandlers() {
-    register((ConnectEvent event) async {
+    register(ConnectEvent, (ConnectEvent event) async {
       if (config!.enableCapabilityNegotiation) {
         unawaited(_doCapabilityNegotiation());
       } else {
@@ -289,7 +290,7 @@ class Client extends ClientBase {
       }
     });
 
-    register((LineSentEvent event) {
+    register(LineSentEvent, (LineSentEvent event) {
       var input = event.message;
 
       if (input == null) {
@@ -308,12 +309,12 @@ class Client extends ClientBase {
       }
     });
 
-    register(processLineForEvents);
+    register(LineReceiveEvent, processLineForEvents);
 
     // Set the connection status
-    register((ConnectEvent event) => connected = true);
+    register(ConnectEvent, (ConnectEvent event) => connected = true);
 
-    register((DisconnectEvent event) {
+    register(DisconnectEvent, (DisconnectEvent event) {
       connected = false;
 
       if (_timer != null && _timer!.isActive) {
@@ -322,7 +323,7 @@ class Client extends ClientBase {
     });
 
     // Handles user quit.
-    register((QuitEvent event) {
+    register(QuitEvent, (QuitEvent event) {
       for (var chan in channels.values) {
         if (chan.hasUserWithName(event.user)) {
           post(QuitPartEvent(this, chan, event.user));
@@ -331,11 +332,11 @@ class Client extends ClientBase {
       }
     });
 
-    register((ChangeHostEvent event) {
+    register(ChangeHostEvent, (ChangeHostEvent event) {
       getUser(event.user, create: true)!._hostname = event.host;
     });
 
-    register((BatchStartEvent event) {
+    register(BatchStartEvent, (BatchStartEvent event) {
       if (event.type == 'NETSPLIT') {
         // Servers lost connection and netsplit
         event.waitForEnd().then((e) {
@@ -356,7 +357,7 @@ class Client extends ClientBase {
     });
 
     // Handles CTCP Events so the action event can be executed
-    register((CTCPEvent event) {
+    register(CTCPEvent, (CTCPEvent event) {
       if (event.message.startsWith('ACTION ')) {
         post(ActionEvent(
             this, event.user, event.target, event.message.substring(7)));
@@ -364,18 +365,18 @@ class Client extends ClientBase {
     });
 
     /* Handles User Tracking in Channels when a user joins. A user is a member until it is changed. */
-    register((JoinEvent event) {
+    register(JoinEvent, (JoinEvent event) {
       event.channel!.members.add(getUser(event.user, create: true));
     });
 
     // Handles User Tracking in Channels when a user leaves
-    register((PartEvent event) {
+    register(PartEvent, (PartEvent event) {
       var channel = event.channel!;
       channel._dropFromUserList(event.user);
     });
 
     // Handles User Tracking in Channels when a user is kicked.
-    register((KickEvent event) {
+    register(KickEvent, (KickEvent event) {
       var channel = event.channel!;
       channel._dropFromUserList(event.user!.name);
       if (event.user!.nickname == nickname) {
@@ -384,14 +385,14 @@ class Client extends ClientBase {
     });
 
     // Handles Nickname Changes
-    register((NickChangeEvent event) {
+    register(NickChangeEvent, (NickChangeEvent event) {
       if (event.original == _nickname) {
         _nickname = event.now;
       }
     });
 
     // Handles Channel User Tracking
-    register((ModeEvent event) {
+    register(ModeEvent, (ModeEvent event) {
       if (event.channel != null) {
         var channel = event.channel;
         var prefixes = _modePrefixes;
@@ -437,15 +438,16 @@ class Client extends ClientBase {
     });
 
     // When the Client leaves a channel, we no longer retain the object.
-    register((ClientPartEvent event) => channels.remove(event.channel!.name));
+    register(ClientPartEvent,
+        (ClientPartEvent event) => channels.remove(event.channel!.name));
 
-    register((ServerSupportsEvent event) {
+    register(ServerSupportsEvent, (ServerSupportsEvent event) {
       _supported.addAll(event.supported);
       _modePrefixes =
           IrcParserSupport.parseSupportedPrefixes(_supported['PREFIX']);
     });
 
-    register((WhoisEvent event) {
+    register(WhoisEvent, (WhoisEvent event) {
       var user = getUser(event.nickname, create: true)!;
       user._realName = event.realname;
       user._hostname = event.hostname;
@@ -525,14 +527,14 @@ class Client extends ClientBase {
       }
     };
 
-    register(handler);
+    register(IsOnEvent, handler);
     send('ISON ${name}');
 
     return completer.future
         .timeout(timeout, onTimeout: () => false)
         .then((value) {
       Future(() {
-        unregister(handler);
+        unregister(IsOnEvent, handler);
       });
       return value;
     });
@@ -1330,11 +1332,11 @@ class Monitor {
   final Client client;
 
   Monitor(this.client) {
-    client.register((UserOnlineEvent event) {
+    client.register(UserOnlineEvent, (UserOnlineEvent event) {
       statuses[event.user] = true;
     });
 
-    client.register((UserOfflineEvent event) {
+    client.register(UserOfflineEvent, (UserOfflineEvent event) {
       statuses[event.user] = false;
     });
   }

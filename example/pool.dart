@@ -19,15 +19,15 @@ void main(List<String> args) {
   var pool = ClientPool();
   configs.forEach(pool.addClient);
 
-  pool.register((ConnectEvent event) {
+  pool.register(ConnectEvent, (ConnectEvent event) {
     print('${event.client.nickname} is connected.');
   });
 
-  pool.register((LineReceiveEvent event) {
+  pool.register(LineReceiveEvent, (LineReceiveEvent event) {
     print('>> ${event.line}');
   });
 
-  pool.register((ReadyEvent event) {
+  pool.register(ReadyEvent, (ReadyEvent event) {
     event.join('#spinlocklabs');
   });
 
