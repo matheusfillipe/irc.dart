@@ -72,12 +72,12 @@ class Client extends ClientBase {
       this.sendInterval = const Duration(milliseconds: 2)})
       : parser = parser ?? RegexIrcParser(),
         connection = connection ??
-            (config.websocket
+            (config!.websocket
                 ? WebSocketIrcConnection()
                 : SocketIrcConnection()),
         metadata = {} {
     _registerHandlers();
-    _nickname = config.nickname;
+    _nickname = config!.nickname;
     _whoisBuilders = <String, WhoisBuilder>{};
     monitor = Monitor(this);
   }
@@ -569,6 +569,7 @@ class Client extends ClientBase {
             onTimeout: () {
               return null;
             } as FutureOr<TopicEvent> Function()?)
+        // ignore: unnecessary_type_check
         .then((e) => e is TopicEvent ? e.topic! : null));
   }
 
@@ -685,8 +686,7 @@ class Client extends ClientBase {
     var future = onEvent<WhoisEvent>().where((it) => it.nickname == user).first;
     send('WHOIS ${user}');
     return await future.timeout(timeout,
-        onTimeout: (() => throw UserNotFoundException(user))
-            as FutureOr<WhoisEvent> Function()?);
+        onTimeout: (() => throw UserNotFoundException(user)));
   }
 
   void processLineForEvents(LineReceiveEvent event) {
